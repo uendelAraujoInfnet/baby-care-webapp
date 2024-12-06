@@ -5,6 +5,7 @@ import { loginUser } from "../services/supabaseClient";
 import { saveToLocalStorage } from "../utils/localStorage";
 import AuthContext from "../contexts/AuthContext";
 import { Link } from "react-router-dom";
+import SettingsButton from "../components/SettingsButton";
 
 const Login = () => {
   const [username, setUsername] = useState("");
@@ -13,7 +14,7 @@ const Login = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
- /* const handleLogin = async () => {
+  /* const handleLogin = async () => {
     const { data, error } = await loginUser(username, password);
     if (error || !data) {
       alert("Usuário ou senha inválidos!");
@@ -28,15 +29,15 @@ const Login = () => {
     try {
       const { data, error } = await loginUser(username, password);
       if (error || !data) {
-        alert('Usuário ou senha inválidos!');
+        alert("Usuário ou senha inválidos!");
         return;
       }
 
       login(data); // Atualiza o estado global com os dados do usuário
-      navigate('/home'); // Redireciona para a página inicial
+      navigate("/home");
     } catch (err) {
-      console.error('Erro ao tentar fazer login:', err);
-      alert('Erro ao tentar fazer login. Tente novamente.');
+      console.error("Erro ao tentar fazer login:", err);
+      alert("Erro ao tentar fazer login. Tente novamente.");
     }
   };
 
@@ -63,7 +64,7 @@ const Login = () => {
         />
         <Button
           variant="contained"
-          color="primary"
+          color="success"
           fullWidth
           onClick={handleLogin}
         >
@@ -75,6 +76,10 @@ const Login = () => {
         <Typography variant="body2">
           Não tem uma conta? <Link to="/register">Cadastre-se</Link>
         </Typography>
+      </Box>
+
+      <Box mt={3} display="flex" justifyContent="flex-end" width="100%">
+        <SettingsButton />
       </Box>
     </Container>
   );

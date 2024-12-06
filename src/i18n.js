@@ -2,17 +2,21 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-const resources = {
-  en: { translation: { welcome: 'Welcome' } },
-  pt: { translation: { welcome: 'Bem-vindo' } },
-  es: { translation: { welcome: 'Bienvenido' } },
-};
+// Importar traduções
+import en from './locales/en.json';
+import pt from './locales/pt.json';
+import es from './locales/es.json';
 
-i18n.use(LanguageDetector)
+i18n
+  .use(LanguageDetector) // Detecta o idioma do navegador
   .use(initReactI18next)
   .init({
-    resources,
-    fallbackLng: 'en',
+    resources: {
+      en: { translation: en },
+      pt: { translation: pt },
+      es: { translation: es },
+    },
+    fallbackLng: 'en', // Idioma padrão
     interpolation: {
       escapeValue: false,
     },
