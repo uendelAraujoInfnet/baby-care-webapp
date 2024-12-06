@@ -10,5 +10,11 @@
   "diaper": "Fralda",
   "sleep": "Sono",
   "breast-feeding": "Amamentação",
-  "history": "Histórico"
+  "history": "Histórico",
+  "user": "Usuário",
+  "password": "Senha",
+  "connect": "Conectar",
+  "don't have an account?": "Não possui uma conta?",
+  "register": "Cadastrar",
+  "select an image": "Selecionar uma Imagem"
 }

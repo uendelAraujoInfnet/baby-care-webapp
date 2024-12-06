@@ -6,10 +6,10 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 //FUNÇÕES PARA TRATAR A PARTE DO SUPABASE ( TRABALHAR COM AS TABELAS )
-export const createUser = async (username, password) => {
+export const createUser = async (username, password, avatarUrl) => {
   const { data, error } = await supabase
     .from('users')
-    .insert([{ username, password }])
+    .insert([{ username, password, avatar: avatarUrl }])
     .select(); // Adiciona retorno explícito dos dados
 
   console.log('Supabase Insert Response:', { data, error });
@@ -23,9 +23,7 @@ export const loginUser = async (username, password) => {
     .select('*')
     .eq('username', username)
     .eq('password', password)
-    .single();
-
-    console.log('Supabase Login Response:', { data, error });
+    .maybeSingle();
     
   return { data, error };
 };

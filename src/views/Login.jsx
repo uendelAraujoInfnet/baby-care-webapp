@@ -1,43 +1,67 @@
 import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { TextField, Button, Container, Typography, Box } from "@mui/material";
 import { loginUser } from "../services/supabaseClient";
 import { saveToLocalStorage } from "../utils/localStorage";
 import AuthContext from "../contexts/AuthContext";
-import { Link } from "react-router-dom";
 import SettingsButton from "../components/SettingsButton";
+import AlertComponent from "../components/AlertComponent";
+import { useTranslation } from "react-i18next";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  //const { setUser } = useContext(AuthContext);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    message: "",
+    severity: "info",
+  });
+
   const { login } = useContext(AuthContext);
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
-  /* const handleLogin = async () => {
-    const { data, error } = await loginUser(username, password);
-    if (error || !data) {
-      alert("Usuário ou senha inválidos!");
-    } else {
-      setUser(data);
-      saveToLocalStorage("user", data);
-      navigate("/home");
-    }
-  };*/
-
   const handleLogin = async () => {
+    if (!username || !password) {
+      setAlertConfig({
+        message: "Por favor, preencha todos os campos.",
+        severity: "warning",
+      });
+      setAlertOpen(true);
+      return;
+    }
+
     try {
       const { data, error } = await loginUser(username, password);
+
       if (error || !data) {
-        alert("Usuário ou senha inválidos!");
+        setAlertConfig({
+          message: "Usuário ou senha inválidos!",
+          severity: "error",
+        });
+        setAlertOpen(true);
         return;
       }
 
-      login(data); // Atualiza o estado global com os dados do usuário
-      navigate("/home");
+      setAlertConfig({
+        message: "Login realizado com sucesso!",
+        severity: "success",
+      });
+      setAlertOpen(true);
+
+      // Redireciona para a página Home após 1.5 segundos
+      setTimeout(() => {
+        login(data); // Atualiza o estado global com os dados do usuário
+        saveToLocalStorage("user", data);
+        navigate("/home");
+      }, 1500);
     } catch (err) {
       console.error("Erro ao tentar fazer login:", err);
-      alert("Erro ao tentar fazer login. Tente novamente.");
+      setAlertConfig({
+        message: "Erro ao tentar fazer login. Tente novamente.",
+        severity: "error",
+      });
+      setAlertOpen(true);
     }
   };
 
@@ -48,7 +72,7 @@ const Login = () => {
         <TextField
           fullWidth
           margin="normal"
-          label="Usuário"
+          label={t("user")}
           variant="outlined"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
@@ -57,7 +81,7 @@ const Login = () => {
           fullWidth
           margin="normal"
           type="password"
-          label="Senha"
+          label={t("password")}
           variant="outlined"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
@@ -68,19 +92,26 @@ const Login = () => {
           fullWidth
           onClick={handleLogin}
         >
-          Entrar
+          {t("connect")}
         </Button>
       </Box>
 
       <Box mt={2}>
         <Typography variant="body2">
-          Não tem uma conta? <Link to="/register">Cadastre-se</Link>
+          {t("don't have an account?")} <Link to="/register">{t("register")}</Link>
         </Typography>
       </Box>
 
       <Box mt={3} display="flex" justifyContent="flex-end" width="100%">
         <SettingsButton />
       </Box>
+
+      <AlertComponent
+        open={alertOpen}
+        onClose={() => setAlertOpen(false)}
+        message={alertConfig.message}
+        severity={alertConfig.severity}
+      />
     </Container>
   );
 };

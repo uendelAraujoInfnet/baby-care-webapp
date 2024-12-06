@@ -10,5 +10,11 @@
   "diaper": "Diaper",
   "sleep": "Sleep",
   "breast-feeding": "Breast-Feeding",
-  "history": "History"
+  "history": "History",
+  "user": "User",
+  "password": "Password",
+  "connect": "Connect",
+  "don't have an account?": "Don't have an account?",
+  "register": "Register",
+  "select an image": "Select an Image"
 }

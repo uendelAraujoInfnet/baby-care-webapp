@@ -17,6 +17,7 @@ import { addEntry } from "../services/supabaseClient";
 import { saveToLocalStorage, getFromLocalStorage } from "../utils/localStorage";
 import SettingsButton from "../components/SettingsButton";
 import { useTranslation } from "react-i18next";
+import AvatarComponent from "../components/AvatarComponent";
 
 const Home = () => {
   const { user } = useContext(AuthContext);
@@ -66,6 +67,7 @@ const Home = () => {
           justifyContent="space-between"
           alignItems="center"
         >
+          <AvatarComponent src={user?.avatar} alt={user?.username} size={80} />
           <Typography variant="h4">
             {t("welcome")}, {user?.username || "User"}
           </Typography>
@@ -73,8 +75,8 @@ const Home = () => {
         </Box>
 
         <Typography variant="h6">
-          {t("baby")}: {babyInfo.name}, {t("weight")}: {babyInfo.weight}, {t("length")}:{" "}
-          {babyInfo.length}
+          {t("baby")}: {babyInfo.name}, {t("weight")}: {babyInfo.weight},{" "}
+          {t("length")}: {babyInfo.length}
         </Typography>
       </Box>
 
