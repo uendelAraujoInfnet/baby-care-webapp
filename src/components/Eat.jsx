@@ -5,14 +5,16 @@ const Eat = ({ onSubmit }) => {
   const [method, setMethod] = useState("");
   const [observation, setObservation] = useState("");
 
-  const handleSubmit = () => {
-    if (!method) {
-      alert("Por favor, preencha o método de alimentação!");
+  const handleFormSubmit = async (type, data) => {
+    const { result, error } = await saveEntry(type, data);
+  
+    if (error) {
+      alert("Erro ao salvar entrada!");
       return;
     }
-    onSubmit({ method, observation });
-    setMethod("");
-    setObservation("");
+  
+    alert("Entrada salva com sucesso!");
+    setCurrentForm(null); // Fecha o formulário após salvar
   };
 
   return (
@@ -30,7 +32,7 @@ const Eat = ({ onSubmit }) => {
         onChange={(e) => setObservation(e.target.value)}
         fullWidth
       />
-      <Button variant="contained" color="primary" onClick={handleSubmit}>
+      <Button variant="contained" color="primary" onClick={handleFormSubmit} style={{marginBottom: "15px"}}>
         Adicionar Alimentação
       </Button>
     </Box>

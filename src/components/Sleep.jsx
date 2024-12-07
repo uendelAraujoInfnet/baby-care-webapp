@@ -6,15 +6,21 @@ const Sleep = ({ onSubmit }) => {
   const [end, setEnd] = useState("");
   const [observation, setObservation] = useState("");
 
-  const handleSubmit = () => {
-    if (!start || !end) {
-      alert("Por favor, preencha o horário de início e término!");
+  const handleFormSubmit = async (type, data) => {
+    const { result, error } = await saveEntry(type, data);
+    const sleepStart = new Date(`1970-01-01T${formData.start}:00`);
+    const sleepEnd = new Date(`1970-01-01T${formData.end}:00`);
+    const minutesSlept = (sleepEnd - sleepStart) / 60000; // Calcula minutos
+
+    onSubmit("sleep", { ...formData, minutesSlept });
+
+    if (error) {
+      alert("Erro ao salvar entrada!");
       return;
     }
-    onSubmit({ start, end, observation });
-    setStart("");
-    setEnd("");
-    setObservation("");
+
+    alert("Entrada salva com sucesso!");
+    setCurrentForm(null); // Fecha o formulário após salvar
   };
 
   return (
@@ -39,7 +45,7 @@ const Sleep = ({ onSubmit }) => {
         onChange={(e) => setObservation(e.target.value)}
         fullWidth
       />
-      <Button variant="contained" color="primary" onClick={handleSubmit}>
+      <Button variant="contained" color="primary" onClick={handleFormSubmit} style={{marginBottom: "15px"}}>
         Adicionar Sono
       </Button>
     </Box>

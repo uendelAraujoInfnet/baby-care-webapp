@@ -18,7 +18,6 @@ import { useTranslation } from "react-i18next";
 import AvatarComponent from "../components/AvatarComponent";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
-
 import Diaper from "../components/Diaper";
 import Sleep from "../components/Sleep";
 import Eat from "../components/Eat";
@@ -29,8 +28,8 @@ const Home = () => {
   const navigate = useNavigate();
   const [entries, setEntries] = useState([]);
   const [babyInfo, setBabyInfo] = useState(null);
-
-  const [currentForm, setCurrentForm] = useState(null);
+  const [sessionError, setSessionError] = useState(null); 
+  const [currentForm, setCurrentForm] = useState(null); 
 
   // Verificar sessão do usuário
   useEffect(() => {
@@ -39,14 +38,15 @@ const Home = () => {
         const { data: session, error } = await supabase.auth.getSession();
         if (error || !session?.session) {
           console.error("Sessão inválida ou usuário não autenticado.");
-          navigate("/"); // Redireciona para a página de login
+          navigate("/"); 
+          return;
         }
+        console.log("Sessão válida:", session);
       } catch (err) {
         console.error("Erro ao verificar a sessão:", err);
         navigate("/");
       }
     };
-
     checkSession();
   }, [navigate]);
 
@@ -60,9 +60,7 @@ const Home = () => {
         }
         setBabyInfo(babyData);
 
-        const { data: entriesData, error: entriesError } = await getEntries(
-          user?.id
-        );
+        const { data: entriesData, error: entriesError } = await getEntries(user.id);
         if (entriesError || !entriesData) {
           throw new Error("Erro ao carregar histórico.");
         }
@@ -72,10 +70,18 @@ const Home = () => {
       }
     };
 
-    if (user) {
-      fetchData();
-    }
+    fetchData();
   }, [user]);
+
+  if (sessionError) {
+    return (
+      <Container>
+        <Typography variant="h6" color="error">
+          {sessionError}
+        </Typography>
+      </Container>
+    );
+  }
 
   const handleAddEntry = async (type, data) => {
     const newEntry = { type, ...data, timestamp: new Date().toISOString() };
@@ -99,9 +105,9 @@ const Home = () => {
     navigate("/form");
   };
 
-  const handleFormSubmit = (data) => {
-    console.log("Dados do formulário enviados:", data);
-    setCurrentForm(null); // Fecha o formulário após a submissão
+  const handleFormSubmit = (type, data) => {
+    handleAddEntry(type, data);
+    setCurrentForm(null); 
   };
 
   return (
@@ -149,59 +155,58 @@ const Home = () => {
         </Button>
       </Box>
 
-      <Grid container spacing={3}>
-        {/* Card Fralda */}
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h5">{t("diaper")}</Typography>
-              <Button
-                variant="contained"
-                onClick={() => setCurrentForm("diaper")} // Configura o formulário atual
-              >
-                Adicionar {t("diaper")}
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Card Sono */}
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h5">{t("sleep")}</Typography>
-              <Button
-                variant="contained"
-                onClick={() => setCurrentForm("sleep")} // Configura o formulário atual
-              >
-                Adicionar {t("sleep")}
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Card Alimentação */}
-        <Grid item xs={12} sm={4}>
-          <Card>
-            <CardContent>
-              <Typography variant="h5">{t("breast-feeding")}</Typography>
-              <Button
-                variant="contained"
-                onClick={() => setCurrentForm("eat")} // Configura o formulário atual
-              >
-                Adicionar {t("breast-feeding")}
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Renderiza o formulário baseado no estado */}
-        <Grid item xs={12}>
+      {currentForm ? (
+        <>
           {currentForm === "diaper" && <Diaper onSubmit={handleFormSubmit} />}
           {currentForm === "sleep" && <Sleep onSubmit={handleFormSubmit} />}
           {currentForm === "eat" && <Eat onSubmit={handleFormSubmit} />}
+          <Button variant="contained" onClick={() => setCurrentForm(null)}>
+            {t("back")}
+          </Button>
+        </>
+      ) : (
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5">{t("diaper")}</Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => setCurrentForm("diaper")}
+                >
+                 {t("add")} {t("diaper")}
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5">{t("sleep")}</Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => setCurrentForm("sleep")}
+                >
+                 {t("add")} {t("sleep")}
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5">{t("breast-feeding")}</Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => setCurrentForm("eat")}
+                >
+                 {t("add")} {t("breast-feeding")}
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
-      </Grid>
+      )}
 
       <Box mt={4}>
         <Typography variant="h5">{t("history")}</Typography>
