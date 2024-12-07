@@ -113,8 +113,8 @@ const Home = () => {
           </Typography>
           <Box display="flex" gap={2}>
             <SettingsButton />
-            <Button variant="outlined" color="error" onClick={handleLogout}>
-              Logout
+            <Button variant="contained" color="error" onClick={handleLogout}>
+              {t("logout")}
             </Button>
           </Box>
         </Box>

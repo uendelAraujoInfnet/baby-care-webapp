@@ -27,5 +27,9 @@
   "birth": "Birth",
   "disease": "Disease",
   "save-info": " Save Info",
-  "baby-name": "Baby Name"
+  "baby-name": "Baby Name",
+  "please-fill-all-fields": " Please Fill All Fields",
+  "baby-data-saved-successfully" : "Bebé Data Saved Successfully",
+  "error-saving-baby-data": "Error Saving Baby Data",
+  "back-to-home": "Back to Home"
 }

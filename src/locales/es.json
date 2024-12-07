@@ -27,5 +27,9 @@
   "birth": "Nacimiento",
   "disease": "Enfermedad",
   "save-info": "Guardar Información",
-  "baby-name": "Nombre del Bebé"
+  "baby-name": "Nombre del Bebé",
+  "please-fill-all-fields": "Por favor, Rellene Todos los Campos",
+  "baby-data-saved-successfully" : "Información del Bebé Guardada Exitosamente",
+  "error-saving-baby-data": "Error al Guardar la Información del Bebé",
+  "back-to-home": "Volver al Inicio"
 }
