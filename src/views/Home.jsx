@@ -19,12 +19,18 @@ import AvatarComponent from "../components/AvatarComponent";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../services/supabaseClient";
 
+import Diaper from "../components/Diaper";
+import Sleep from "../components/Sleep";
+import Eat from "../components/Eat";
+
 const Home = () => {
   const { user, logout } = useContext(AuthContext);
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [entries, setEntries] = useState([]);
   const [babyInfo, setBabyInfo] = useState(null);
+
+  const [currentForm, setCurrentForm] = useState(null);
 
   // Verificar sessão do usuário
   useEffect(() => {
@@ -93,6 +99,11 @@ const Home = () => {
     navigate("/form");
   };
 
+  const handleFormSubmit = (data) => {
+    console.log("Dados do formulário enviados:", data);
+    setCurrentForm(null); // Fecha o formulário após a submissão
+  };
+
   return (
     <Container>
       <Box my={4}>
@@ -139,60 +150,56 @@ const Home = () => {
       </Box>
 
       <Grid container spacing={3}>
+        {/* Card Fralda */}
         <Grid item xs={12} sm={4}>
           <Card>
             <CardContent>
               <Typography variant="h5">{t("diaper")}</Typography>
               <Button
                 variant="contained"
-                onClick={() =>
-                  handleAddEntry(t("diaper"), {
-                    status: "Limpa",
-                    observation: "Tudo ok!",
-                  })
-                }
+                onClick={() => setCurrentForm("diaper")} // Configura o formulário atual
               >
                 Adicionar {t("diaper")}
               </Button>
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Card Sono */}
         <Grid item xs={12} sm={4}>
           <Card>
             <CardContent>
               <Typography variant="h5">{t("sleep")}</Typography>
               <Button
                 variant="contained"
-                onClick={() =>
-                  handleAddEntry(t("sleep"), {
-                    start: "22:00",
-                    end: "06:00",
-                    observation: "",
-                  })
-                }
+                onClick={() => setCurrentForm("sleep")} // Configura o formulário atual
               >
                 Adicionar {t("sleep")}
               </Button>
             </CardContent>
           </Card>
         </Grid>
+
+        {/* Card Alimentação */}
         <Grid item xs={12} sm={4}>
           <Card>
             <CardContent>
               <Typography variant="h5">{t("breast-feeding")}</Typography>
               <Button
                 variant="contained"
-                onClick={() =>
-                  handleAddEntry(t("breast-feeding"), {
-                    method: "Seio",
-                    observation: "20 min lado direito",
-                  })
-                }
+                onClick={() => setCurrentForm("eat")} // Configura o formulário atual
               >
                 Adicionar {t("breast-feeding")}
               </Button>
             </CardContent>
           </Card>
+        </Grid>
+
+        {/* Renderiza o formulário baseado no estado */}
+        <Grid item xs={12}>
+          {currentForm === "diaper" && <Diaper onSubmit={handleFormSubmit} />}
+          {currentForm === "sleep" && <Sleep onSubmit={handleFormSubmit} />}
+          {currentForm === "eat" && <Eat onSubmit={handleFormSubmit} />}
         </Grid>
       </Grid>
 
