@@ -54,13 +54,24 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Verifica a sessão do usuário
+        const { data: session, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session?.session?.user) {
+          console.error("Usuário não autenticado!");
+          return;
+        }
+  
+        const userId = session.session.user.id;
+  
+        // Obter informações do bebê
         const { data: babyData, error: babyError } = await getBabyData();
         if (babyError || !babyData) {
           throw new Error("Nenhum dado encontrado.");
         }
         setBabyInfo(babyData);
-
-        const { data: entriesData, error: entriesError } = await getEntries(user.id);
+  
+        // Obter histórico de entradas
+        const { data: entriesData, error: entriesError } = await getEntries(userId);
         if (entriesError || !entriesData) {
           throw new Error("Erro ao carregar histórico.");
         }
@@ -69,9 +80,9 @@ const Home = () => {
         console.error("Erro ao carregar informações:", error.message);
       }
     };
-
+  
     fetchData();
-  }, [user]);
+  }, []);
 
   if (sessionError) {
     return (

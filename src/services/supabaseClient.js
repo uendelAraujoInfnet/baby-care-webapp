@@ -106,31 +106,18 @@ export const getEntries = async () => {
 };
 
 // Salvar dados na tabela "entries"
-export const saveEntry = async (type, data) => {
-  const { data: session } = await supabase.auth.getSession();
-
-  if (!session?.user) {
-    console.error("Usuário não autenticado!");
-    return { error: "Usuário não autenticado!" };
-  }
-
+export const saveEntry = async (type, data, userId) => {
   const { data: result, error } = await supabase
-    .from("entries")
-    .insert([
-      {
-        user_id: session.user.id,
-        type,
-        data,
-        timestamp: new Date().toISOString(),
-      },
-    ]);
+    .from('entries')
+    .insert([{ type, ...data, user_id: userId }])
+    .select();
 
   if (error) {
-    console.error("Erro ao salvar entrada:", error);
-    return { error };
+    console.error('Erro ao salvar entrada:', error.message);
+    return { result: null, error };
   }
 
-  return { result };
+  return { result, error: null };
 };
 
 // Adicionar ou atualizar informações do bebê
