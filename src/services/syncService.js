@@ -2,7 +2,7 @@ import { supabase } from './supabaseClient';
 import { saveToLocalStorage, getFromLocalStorage } from '../utils/localStorage';
 
 // Sincronização de dados entre Supabase e LocalStorage
-export const syncData = async (userId, localKey, supabaseTable) => {
+export const syncData = async (userId, tableName, localKey, supabaseTable) => {
   try {
     // Verificação de possível existencia de dados no LocalStorage
     let localData = getFromLocalStorage(localKey);
@@ -10,7 +10,7 @@ export const syncData = async (userId, localKey, supabaseTable) => {
     if (!localData) {
       // Caso não tenha dados no LocalStorage, busca no Supabase
       const { data, error } = await supabase
-        .from(supabaseTable)
+        .from(tableName)
         .select('*')
         .eq('user_id', userId);
 

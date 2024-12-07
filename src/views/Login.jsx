@@ -1,15 +1,14 @@
 import React, { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { TextField, Button, Container, Typography, Box } from "@mui/material";
-import { loginUser } from "../services/supabaseClient";
-import { saveToLocalStorage } from "../utils/localStorage";
+import { supabase } from "../services/supabaseClient";
 import AuthContext from "../contexts/AuthContext";
 import SettingsButton from "../components/SettingsButton";
 import AlertComponent from "../components/AlertComponent";
 import { useTranslation } from "react-i18next";
 
 const Login = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState(""); // Corrigido para usar email
   const [password, setPassword] = useState("");
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertConfig, setAlertConfig] = useState({
@@ -22,7 +21,7 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    if (!username || !password) {
+    if (!email || !password) {
       setAlertConfig({
         message: "Por favor, preencha todos os campos.",
         severity: "warning",
@@ -32,11 +31,15 @@ const Login = () => {
     }
 
     try {
-      const { data, error } = await loginUser(username, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (error || !data) {
+      if (error) {
+        console.error("Erro ao tentar fazer login:", error);
         setAlertConfig({
-          message: "Usuário ou senha inválidos!",
+          message: error.message || "Erro ao tentar fazer login. Tente novamente.",
           severity: "error",
         });
         setAlertOpen(true);
@@ -49,16 +52,13 @@ const Login = () => {
       });
       setAlertOpen(true);
 
-      // Redireciona para a página Home após 1.5 segundos
-      setTimeout(() => {
-        login(data); // Atualiza o estado global com os dados do usuário
-        saveToLocalStorage("user", data);
-        navigate("/home");
-      }, 1500);
+      // Atualiza o contexto global e redireciona
+      login(data.user);
+      navigate("/home");
     } catch (err) {
-      console.error("Erro ao tentar fazer login:", err);
+      console.error("Erro inesperado ao tentar fazer login:", err);
       setAlertConfig({
-        message: "Erro ao tentar fazer login. Tente novamente.",
+        message: "Erro inesperado. Tente novamente.",
         severity: "error",
       });
       setAlertOpen(true);
@@ -72,10 +72,10 @@ const Login = () => {
         <TextField
           fullWidth
           margin="normal"
-          label={t("user")}
+          label={t("email")} // Corrigido para "email"
           variant="outlined"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <TextField
           fullWidth
@@ -91,6 +91,7 @@ const Login = () => {
           color="success"
           fullWidth
           onClick={handleLogin}
+          style={{ marginTop: "10px", fontWeight: "bold" }}
         >
           {t("connect")}
         </Button>

@@ -16,5 +16,16 @@
   "connect": "Connect",
   "don't have an account?": "Don't have an account?",
   "register": "Register",
-  "select an image": "Select an Image"
+  "select an image": "Select an Image",
+  "no-baby-info" : "No Baby Info",
+  "register-baby": "Register Baby",
+  "edit-baby": "Edit Baby",
+  "delete-baby": "Delete Baby",
+  "language-selector": "Language Selector",
+  "logout": "Logout",
+  "baby-info" : "Baby Info",
+  "birth": "Birth",
+  "disease": "Disease",
+  "save-info": " Save Info",
+  "baby-name": "Baby Name"
 }

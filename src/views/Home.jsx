@@ -12,50 +12,90 @@ import {
   ListItemText,
 } from "@mui/material";
 import AuthContext from "../contexts/AuthContext";
-import { syncData } from "../services/syncService";
-import { addEntry } from "../services/supabaseClient";
-import { saveToLocalStorage, getFromLocalStorage } from "../utils/localStorage";
+import { getBabyData, getEntries, addEntry } from "../services/supabaseClient";
 import SettingsButton from "../components/SettingsButton";
 import { useTranslation } from "react-i18next";
 import AvatarComponent from "../components/AvatarComponent";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../services/supabaseClient";
 
 const Home = () => {
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [entries, setEntries] = useState([]);
-  const [babyInfo, setBabyInfo] = useState({
-    name: "Bebê",
-    weight: "3kg",
-    length: "50cm",
-  });
+  const [babyInfo, setBabyInfo] = useState(null);
+  const [sessionError, setSessionError] = useState(null); // Novo estado para erros de sessão
 
-  // Sincronização dos dados na inicialização
+  // Verificar sessão do usuário
   useEffect(() => {
-    const fetchEntries = async () => {
-      const storedEntries = await syncData(user.id, "babyEntries", "entries");
-      if (storedEntries) setEntries(storedEntries);
+    const checkSession = async () => {
+      const session = await getSession();
 
-      // Carregar informações do bebê do LocalStorage
-      const storedBabyInfo = getFromLocalStorage("babyInfo");
-      if (storedBabyInfo) setBabyInfo(storedBabyInfo);
+      if (!session || !session.user) {
+        console.error("Sessão inválida ou usuário não autenticado.");
+        navigate("/"); // Redireciona para a página de login
+      }
     };
-    fetchEntries();
+
+    checkSession();
+  }, [navigate]);
+
+  // Sincronizar dados na inicialização
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: babyData, error: babyError } = await getBabyData();
+        if (babyError || !babyData) {
+          throw new Error("Nenhum dado encontrado.");
+        }
+        setBabyInfo(babyData);
+
+        const { data: entriesData, error: entriesError } = await getEntries(
+          user.id
+        );
+        if (entriesError || !entriesData) {
+          throw new Error("Erro ao carregar histórico.");
+        }
+        setEntries(entriesData);
+      } catch (error) {
+        console.error("Erro ao carregar informações:", error.message);
+      }
+    };
+
+    fetchData();
   }, [user]);
+
+  if (sessionError) {
+    return (
+      <Container>
+        <Typography variant="h6" color="error">
+          {sessionError}
+        </Typography>
+      </Container>
+    );
+  }
 
   const handleAddEntry = async (type, data) => {
     const newEntry = { type, ...data, timestamp: new Date().toISOString() };
 
-    // Salvar no Supabase
     const { result, error } = await addEntry(type, data, user.id);
     if (error) {
       alert("Erro ao salvar entrada no Supabase!");
       return;
     }
 
-    // Atualizar LocalStorage e estado
     const updatedEntries = [newEntry, ...entries];
     setEntries(updatedEntries);
-    saveToLocalStorage("babyEntries", updatedEntries);
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const handleNavigateToBabyForm = () => {
+    navigate("/form");
   };
 
   return (
@@ -71,13 +111,36 @@ const Home = () => {
           <Typography variant="h4">
             {t("welcome")}, {user?.username || "User"}
           </Typography>
-          <SettingsButton />
+          <Box display="flex" gap={2}>
+            <SettingsButton />
+            <Button variant="outlined" color="error" onClick={handleLogout}>
+              Logout
+            </Button>
+          </Box>
         </Box>
 
-        <Typography variant="h6">
-          {t("baby")}: {babyInfo.name}, {t("weight")}: {babyInfo.weight},{" "}
-          {t("length")}: {babyInfo.length}
-        </Typography>
+        <Box>
+          {babyInfo ? (
+            <Typography variant="h6">
+              {t("baby")}: {babyInfo.name}, {t("weight")}: {babyInfo.weight}kg,{" "}
+              {t("length")}: {babyInfo.length}cm
+            </Typography>
+          ) : (
+            <Typography variant="body1" color="textSecondary">
+              {t("no-baby-info")}
+            </Typography>
+          )}
+        </Box>
+      </Box>
+
+      <Box mb={4} display="flex" justifyContent="center">
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleNavigateToBabyForm}
+        >
+          {t("register-baby")}
+        </Button>
       </Box>
 
       <Grid container spacing={3}>
@@ -143,7 +206,6 @@ const Home = () => {
         </Grid>
       </Grid>
 
-      {/* Lista de Entradas */}
       <Box mt={4}>
         <Typography variant="h5">{t("history")}</Typography>
         <List>

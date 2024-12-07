@@ -16,5 +16,16 @@
   "connect": "Conectar",
   "don't have an account?": "No tienes una cuenta?",
   "register": "Registrarse",
-  "select an image": "Seleccione una Imagen"
+  "select an image": "Seleccione una Imagen",
+  "no-baby-info" : "Sin Información del Bebé",
+  "register-baby": "Registrarse como Bebé",
+  "edit-baby": "Editar Bebé",
+  "delete-baby": "Borrar Bebé",
+  "language-selector": "Selector de Idioma",
+  "logout": "Cerrar Sesión",
+  "baby-info" : "Información del Bebé",
+  "birth": "Nacimiento",
+  "disease": "Enfermedad",
+  "save-info": "Guardar Información",
+  "baby-name": "Nombre del Bebé"
 }
