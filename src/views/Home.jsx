@@ -7,12 +7,16 @@ import {
   CardContent,
   Button,
   Grid,
-  List,
-  ListItem,
-  ListItemText,
+  Pagination,
 } from "@mui/material";
 import AuthContext from "../contexts/AuthContext";
-import { getBabyData, getEntries, addEntry } from "../services/supabaseClient";
+import {
+  getBabyData,
+  getEntries,
+  addEntry,
+  updateEntry,
+  deleteEntry,
+} from "../services/supabaseClient";
 import SettingsButton from "../components/SettingsButton";
 import { useTranslation } from "react-i18next";
 import AvatarComponent from "../components/AvatarComponent";
@@ -21,6 +25,9 @@ import { supabase } from "../services/supabaseClient";
 import Diaper from "../components/Diaper";
 import Sleep from "../components/Sleep";
 import Eat from "../components/Eat";
+import { format } from "date-fns";
+
+const ITEMS_PER_PAGE = 10; // Máximo de itens por página
 
 const Home = () => {
   const { user, logout } = useContext(AuthContext);
@@ -28,8 +35,11 @@ const Home = () => {
   const navigate = useNavigate();
   const [entries, setEntries] = useState([]);
   const [babyInfo, setBabyInfo] = useState(null);
-  const [sessionError, setSessionError] = useState(null); 
-  const [currentForm, setCurrentForm] = useState(null); 
+  const [sessionError, setSessionError] = useState(null);
+  const [currentForm, setCurrentForm] = useState(null);
+  const itemsPerPage = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const [editingEntry, setEditingEntry] = useState(null);
 
   // Verificar sessão do usuário
   useEffect(() => {
@@ -38,7 +48,7 @@ const Home = () => {
         const { data: session, error } = await supabase.auth.getSession();
         if (error || !session?.session) {
           console.error("Sessão inválida ou usuário não autenticado.");
-          navigate("/"); 
+          navigate("/");
           return;
         }
         console.log("Sessão válida:", session);
@@ -54,24 +64,24 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Verifica a sessão do usuário
-        const { data: session, error: sessionError } = await supabase.auth.getSession();
+        const { data: session, error: sessionError } =
+          await supabase.auth.getSession();
         if (sessionError || !session?.session?.user) {
           console.error("Usuário não autenticado!");
           return;
         }
-  
+
         const userId = session.session.user.id;
-  
-        // Obter informações do bebê
+
         const { data: babyData, error: babyError } = await getBabyData();
         if (babyError || !babyData) {
           throw new Error("Nenhum dado encontrado.");
         }
         setBabyInfo(babyData);
-  
-        // Obter histórico de entradas
-        const { data: entriesData, error: entriesError } = await getEntries(userId);
+
+        const { data: entriesData, error: entriesError } = await getEntries(
+          userId
+        );
         if (entriesError || !entriesData) {
           throw new Error("Erro ao carregar histórico.");
         }
@@ -80,7 +90,7 @@ const Home = () => {
         console.error("Erro ao carregar informações:", error.message);
       }
     };
-  
+
     fetchData();
   }, []);
 
@@ -103,8 +113,42 @@ const Home = () => {
       return;
     }
 
-    const updatedEntries = [newEntry, ...entries];
-    setEntries(updatedEntries);
+    setEntries([newEntry, ...entries]);
+    setCurrentForm(null);
+  };
+
+  const handleEditEntry = (entry) => {
+    setEditingEntry(entry);
+    setCurrentForm(entry.type); // Abre o formulário correspondente
+  };
+
+  const handleDeleteEntry = async (entryId) => {
+    const { error } = await deleteEntry(entryId);
+    if (error) {
+      alert("Erro ao deletar entrada. Tente novamente.");
+      return;
+    }
+    setEntries(entries.filter((entry) => entry.id !== entryId));
+  };
+
+  const handleFormSubmit = async (type, data) => {
+    if (editingEntry) {
+      // Atualizar entrada existente
+      const { error } = await updateEntry(editingEntry.id, { ...data, type });
+      if (error) {
+        alert("Erro ao atualizar entrada. Tente novamente.");
+        return;
+      }
+      setEntries(
+        entries.map((entry) =>
+          entry.id === editingEntry.id ? { ...entry, ...data } : entry
+        )
+      );
+    } else {
+      // Adicionar nova entrada
+      handleAddEntry(type, data);
+    }
+    setEditingEntry(null);
   };
 
   const handleLogout = () => {
@@ -116,10 +160,33 @@ const Home = () => {
     navigate("/form");
   };
 
-  const handleFormSubmit = (type, data) => {
-    handleAddEntry(type, data);
-    setCurrentForm(null); 
+  const handleEdit = (entry) => {
+    navigate(`/edit/${entry.id}`, { state: entry });
   };
+
+  const handleDelete = async (id) => {
+    const confirmation = window.confirm(
+      "Tem certeza que deseja excluir este item?"
+    );
+    if (!confirmation) return;
+
+    const { error } = await deleteEntry(id);
+    if (error) {
+      alert("Erro ao deletar o item. Tente novamente.");
+      console.error("Erro ao deletar:", error);
+      return;
+    }
+
+    // Atualiza a lista de entradas no estado local
+    setEntries((prevEntries) => prevEntries.filter((entry) => entry.id !== id));
+  };
+
+  const currentItems = entries.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const totalPages = Math.ceil(entries.length / ITEMS_PER_PAGE);
 
   return (
     <Container>
@@ -136,6 +203,13 @@ const Home = () => {
           </Typography>
           <Box display="flex" gap={2}>
             <SettingsButton />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => navigate("/dashboard")}
+            >
+              Dashboard
+            </Button>
             <Button variant="contained" color="error" onClick={handleLogout}>
               {t("logout")}
             </Button>
@@ -176,62 +250,109 @@ const Home = () => {
           </Button>
         </>
       ) : (
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h5">{t("diaper")}</Typography>
-                <Button
-                  variant="contained"
-                  onClick={() => setCurrentForm("diaper")}
-                >
-                 {t("add")} {t("diaper")}
-                </Button>
-              </CardContent>
-            </Card>
+        <>
+          {/* Botões para Adicionar Novo Diaper, Sleep e Eat */}
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h5">{t("diaper")}</Typography>
+                  <Button
+                    variant="contained"
+                    onClick={() => setCurrentForm("diaper")}
+                  >
+                    {t("add")} {t("diaper")}
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h5">{t("sleep")}</Typography>
+                  <Button
+                    variant="contained"
+                    onClick={() => setCurrentForm("sleep")}
+                  >
+                    {t("add")} {t("sleep")}
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h5">{t("breast-feeding")}</Typography>
+                  <Button
+                    variant="contained"
+                    onClick={() => setCurrentForm("eat")}
+                  >
+                    {t("add")} {t("breast-feeding")}
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h5">{t("sleep")}</Typography>
-                <Button
-                  variant="contained"
-                  onClick={() => setCurrentForm("sleep")}
-                >
-                 {t("add")} {t("sleep")}
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h5">{t("breast-feeding")}</Typography>
-                <Button
-                  variant="contained"
-                  onClick={() => setCurrentForm("eat")}
-                >
-                 {t("add")} {t("breast-feeding")}
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      )}
 
-      <Box mt={4}>
-        <Typography variant="h5">{t("history")}</Typography>
-        <List>
-          {entries.map((entry, index) => (
-            <ListItem key={index}>
-              <ListItemText
-                primary={`${entry.type} - ${entry.timestamp}`}
-                secondary={entry.observation || "Sem observação"}
+          {/* Histórico com Botões de Editar e Deletar */}
+          <Box mt={4}>
+            <Typography variant="h5">{t("history")}</Typography>
+            <Grid container spacing={2}>
+              {entries
+                .slice(
+                  (currentPage - 1) * itemsPerPage,
+                  currentPage * itemsPerPage
+                )
+                .map((entry) => (
+                  <Grid item xs={12} sm={6} md={4} key={entry.id}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6">
+                          {entry.type} -{" "}
+                          {format(
+                            new Date(entry.timestamp),
+                            "dd/MM/yyyy HH:mm"
+                          )}
+                        </Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          {entry.observation || t("no-observation")}
+                        </Typography>
+                        <Box
+                          mt={2}
+                          display="flex"
+                          justifyContent="space-between"
+                        >
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => handleEdit(entry)}
+                          >
+                            {t("edit")}
+                          </Button>
+                          <Button
+                            variant="contained"
+                            color="secondary"
+                            onClick={() => handleDelete(entry.id)}
+                          >
+                            {t("delete")}
+                          </Button>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+            </Grid>
+            {/* Paginação */}
+            <Box mt={4} display="flex" justifyContent="center">
+              <Pagination
+                count={Math.ceil(entries.length / itemsPerPage)}
+                page={currentPage}
+                onChange={(event, value) => setCurrentPage(value)}
               />
-            </ListItem>
-          ))}
-        </List>
-      </Box>
+            </Box>
+          </Box>
+        </>
+      )}
     </Container>
   );
 };

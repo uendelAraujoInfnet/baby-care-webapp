@@ -120,6 +120,37 @@ export const saveEntry = async (type, data, userId) => {
   return { result, error: null };
 };
 
+// Função para deletar uma entrada
+export const deleteEntry = async (entryId) => {
+  const { error } = await supabase
+    .from("entries")
+    .delete()
+    .eq("id", entryId);
+
+  if (error) {
+    console.error("Erro ao deletar entrada:", error.message);
+    return { error };
+  }
+
+  return { error: null };
+};
+
+// Função para atualizar uma entrada
+export const updateEntry = async (entryId, updatedData) => {
+  const { data, error } = await supabase
+    .from("entries")
+    .update(updatedData)
+    .eq("id", entryId);
+
+  if (error) {
+    console.error("Erro ao atualizar entrada:", error.message);
+    return { data: null, error };
+  }
+
+  return { data, error: null };
+};
+
+
 // Adicionar ou atualizar informações do bebê
 export const addBabyData = async (babyInfo) => {
   const session = await getSession();

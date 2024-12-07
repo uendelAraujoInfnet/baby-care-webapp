@@ -16,6 +16,7 @@
     "@mui/material": "^6.1.10",
     "@supabase/supabase-js": "^2.47.2",
     "axios": "^1.7.9",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "i18next": "^24.0.5",
     "i18next-browser-languagedetector": "^8.0.0",
