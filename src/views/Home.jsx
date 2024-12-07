@@ -25,16 +25,19 @@ const Home = () => {
   const navigate = useNavigate();
   const [entries, setEntries] = useState([]);
   const [babyInfo, setBabyInfo] = useState(null);
-  const [sessionError, setSessionError] = useState(null); // Novo estado para erros de sessão
 
   // Verificar sessão do usuário
   useEffect(() => {
     const checkSession = async () => {
-      const session = await getSession();
-
-      if (!session || !session.user) {
-        console.error("Sessão inválida ou usuário não autenticado.");
-        navigate("/"); // Redireciona para a página de login
+      try {
+        const { data: session, error } = await supabase.auth.getSession();
+        if (error || !session?.session) {
+          console.error("Sessão inválida ou usuário não autenticado.");
+          navigate("/"); // Redireciona para a página de login
+        }
+      } catch (err) {
+        console.error("Erro ao verificar a sessão:", err);
+        navigate("/");
       }
     };
 
@@ -52,7 +55,7 @@ const Home = () => {
         setBabyInfo(babyData);
 
         const { data: entriesData, error: entriesError } = await getEntries(
-          user.id
+          user?.id
         );
         if (entriesError || !entriesData) {
           throw new Error("Erro ao carregar histórico.");
@@ -63,18 +66,10 @@ const Home = () => {
       }
     };
 
-    fetchData();
+    if (user) {
+      fetchData();
+    }
   }, [user]);
-
-  if (sessionError) {
-    return (
-      <Container>
-        <Typography variant="h6" color="error">
-          {sessionError}
-        </Typography>
-      </Container>
-    );
-  }
 
   const handleAddEntry = async (type, data) => {
     const newEntry = { type, ...data, timestamp: new Date().toISOString() };
@@ -144,7 +139,6 @@ const Home = () => {
       </Box>
 
       <Grid container spacing={3}>
-        {/* Card Fralda */}
         <Grid item xs={12} sm={4}>
           <Card>
             <CardContent>
@@ -163,8 +157,6 @@ const Home = () => {
             </CardContent>
           </Card>
         </Grid>
-
-        {/* Card Sono */}
         <Grid item xs={12} sm={4}>
           <Card>
             <CardContent>
@@ -184,8 +176,6 @@ const Home = () => {
             </CardContent>
           </Card>
         </Grid>
-
-        {/* Card Amamentação */}
         <Grid item xs={12} sm={4}>
           <Card>
             <CardContent>
